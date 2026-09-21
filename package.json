@@ -1,0 +1,17 @@
+{
+  "name": "curate-studio",
+  "version": "1.0.0",
+  "description": "大学策展教学系统：老师建展厅(session)并控制学生权限，学生在虚拟展厅里放墙/标签/挂画，游客可只读浏览。",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "curation",
+    "virtual-gallery",
+    "threejs",
+    "museum-education",
+    "teaching"
+  ],
+  "engines": { "node": ">=14" }
+}

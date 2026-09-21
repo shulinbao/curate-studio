@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Curate Studio · Virtual Curation</title>
+<link rel="stylesheet" href="style.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+<canvas id="scene"></canvas>
+
+<div id="hud">
+  <div class="brand">Curate <span>Studio</span></div>
+  <div id="session-title">No gallery open</div>
+  <div id="hud-status">Guest · read-only</div>
+  <div class="spacer"></div>
+  <select id="hl-group" class="hbtn" style="display:none;color:#eaf1ff"></select>
+  <button class="hbtn" id="btn-home" style="display:none">Home</button>
+  <button class="hbtn" id="btn-chat" style="display:none">Chat</button>
+  <button class="hbtn" id="btn-share" style="display:none">Share</button>
+  <button class="hbtn" id="btn-profile" style="display:none">Profile</button>
+  <button class="hbtn" id="btn-users" style="display:none">Users</button>
+  <button class="hbtn" id="btn-sessions">Galleries</button>
+  <button class="hbtn" id="btn-admin" style="display:none">Manage</button>
+  <button class="hbtn primary" id="btn-auth">Log in</button>
+</div>
+
+<div id="toolbar" class="hidden"></div>
+<div id="crosshair" class="hidden"></div>
+<div id="label-tooltip"></div>
+
+<div id="props-panel" class="hidden">
+  <div class="pp-head"><b id="pp-title">Material</b><button id="pp-close">×</button></div>
+  <div class="pp-row"><label>Type</label><span class="chips" id="pp-type"></span></div>
+  <div class="pp-row" id="pp-wh" style="display:flex;gap:6px"></div>
+  <div class="pp-row" id="pp-extra"></div>
+  <div class="pp-row"><span class="pp-tip" id="pp-tip"></span></div>
+</div>
+
+<div id="chat-wrap" class="hidden">
+  <div id="chat-panel">
+    <div class="cp-head"><span>Gallery Chat</span><button id="btn-chat-close">×</button></div>
+    <div id="chat-msgs"></div>
+    <div class="cp-input"><input id="chat-text" placeholder="Type a message…" /><button id="chat-send">Send</button></div>
+  </div>
+</div>
+
+<!-- one unified help dock: tray + full controls + live context hint -->
+<div id="help" style="display:none">
+  <div class="hp-head" id="hp-head">
+    <span class="hp-ico">⌨</span>
+    <b>Controls</b>
+    <span class="hp-ctx" id="hp-context"></span>
+    <button class="hp-toggle" id="btn-help-toggle" title="Collapse / expand">–</button>
+  </div>
+  <div class="hp-minbar"><kbd>E</kbd> place · <kbd>F</kbd> use · <kbd>Del</kbd> delete · <kbd>M</kbd> move · <kbd>1</kbd>–<kbd>0</kbd> tools</div>
+  <div class="hp-body">
+    <div class="hp-sec">Move</div>
+    <div class="hp-row"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk &nbsp;·&nbsp; <kbd>Space</kbd> rise &nbsp;·&nbsp; <kbd>Shift</kbd> descend &nbsp;·&nbsp; double <kbd>Space</kbd> land &nbsp;·&nbsp; drag mouse to look</div>
+    <div class="hp-sec">Act</div>
+    <div class="hp-row"><kbd>E</kbd> place / use &nbsp;·&nbsp; <kbd>F</kbd> interact &nbsp;·&nbsp; <kbd>Del</kbd> delete aimed &nbsp;·&nbsp; <kbd>M</kbd> move tool</div>
+    <div class="hp-sec">Tools — or click a button in the toolbar</div>
+    <div class="hp-row"><kbd>1</kbd> Browse &nbsp; <kbd>2</kbd> Block &nbsp; <kbd>3</kbd> Case &nbsp; <kbd>4</kbd> Light &nbsp; <kbd>5</kbd> Furniture &nbsp; <kbd>6</kbd> Barrier &nbsp; <kbd>7</kbd> Artwork &nbsp; <kbd>8</kbd> Label &nbsp; <kbd>9</kbd> Delete &nbsp; <kbd>0</kbd> Move</div>
+    <div class="hp-sec">Tip</div>
+    <div class="hp-row">Aim the crosshair and press <kbd>E</kbd> to place. Doors &amp; windows replace a wall block — doors carve a full-height opening.</div>
+  </div>
+</div>
+
+<!-- Home / landing page -->
+<div id="home" class="home">
+  <div class="home-inner">
+    <div class="home-brand">Curate <span>Studio</span></div>
+    <div class="home-sub">A virtual curation studio for art and museum teaching.<br>Walk, build your gallery block by block, hang artworks, add wall labels and lighting.<br>Designed for visual-arts courses at <b>The Hong Kong University of Science and Technology</b>.</div>
+    <div id="home-sessions"></div>
+    <button id="home-login" class="btn">Log in / Sign up</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<div id="login-modal" class="modal hidden">
+  <div class="card">
+    <button class="close-x" data-close="login-modal">×</button>
+    <div class="pills"><button id="tab-login" class="on">Log in</button><button id="tab-register">Sign up</button></div>
+    <div id="login-form">
+      <div class="row"><label>Username</label><input type="text" id="lg-user" /></div>
+      <div class="row"><label>Password</label><input type="password" id="lg-pass" /></div>
+      <div class="card-actions"><button class="btn" id="btn-login">Log in</button></div>
+    </div>
+    <div id="register-form" class="hidden">
+      <div class="row"><label>Username</label><input type="text" id="rg-user" /></div>
+      <div class="row"><label>Display name</label><input type="text" id="rg-name" /></div>
+      <div class="row"><label>Password</label><input type="password" id="rg-pass" /></div>
+      <div class="row"><label>Role</label>
+        <span class="chips"><button type="button" id="rg-role-student" class="on">Student</button><button type="button" id="rg-role-teacher">Teacher</button></span>
+      </div>
+      <div class="row"><label>Administrator key (required to register as Teacher)</label><input type="password" id="rg-key" /></div>
+      <div class="card-actions"><button class="btn" id="btn-register">Sign up</button></div>
+    </div>
+  </div>
+</div>
+
+<div id="profile-modal" class="modal hidden">
+  <div class="card" style="width:min(440px,90vw)">
+    <button class="close-x" data-close="profile-modal">×</button>
+    <h2>My avatar</h2>
+    <div class="row"><label>Body color</label><input type="color" id="pf-color" /></div>
+    <div class="row"><label>Skin tone</label><input type="color" id="pf-skin" /></div>
+    <div class="row"><label>Hair color</label><input type="color" id="pf-hair" /></div>
+    <div class="card-actions"><button class="btn" id="btn-pf-save">Save</button></div>
+  </div>
+</div>
+
+<div id="users-modal" class="modal hidden">
+  <div class="card" style="width:min(620px,94vw)">
+    <button class="close-x" data-close="users-modal">×</button>
+    <h2>User accounts</h2>
+    <div id="users-list"></div>
+  </div>
+</div>
+
+<div id="grade-modal" class="modal hidden">
+  <div class="card" style="width:min(720px,94vw)">
+    <button class="close-x" data-close="grade-modal">×</button>
+    <h2 id="grade-title">Student artwork & grading</h2>
+    <div id="grade-body"></div>
+  </div>
+</div>
+
+<div id="sessions-modal" class="modal hidden">
+  <div class="card">
+    <button class="close-x" data-close="sessions-modal">×</button>
+    <h2 id="sessions-title">Galleries</h2>
+    <button class="btn ghost" id="btn-new-session" style="display:none;margin-bottom:14px">+ New Gallery (Session)</button>
+    <div id="sessions-list"></div>
+  </div>
+</div>
+
+<div id="admin-modal" class="modal hidden">
+  <div class="card">
+    <button class="close-x" data-close="admin-modal">×</button>
+    <h2>Manage Gallery</h2>
+    <div class="row"><label>Title</label><input type="text" id="adm-title" /></div>
+    <div class="row"><label>Description / curator statement</label><textarea id="adm-desc"></textarea></div>
+    <label class="check"><input type="checkbox" id="adm-pub" /> <span><b>Publish</b> (public can view)</span></label>
+    <h3>Student permissions</h3>
+    <label class="check"><input type="checkbox" id="adm-pw" /> Allow students <b>blocks / walls</b></label>
+    <label class="check"><input type="checkbox" id="adm-pd" /> Allow students <b>decor (cases / lights)</b></label>
+    <label class="check"><input type="checkbox" id="adm-pl" /> Allow students <b>labels</b></label>
+    <label class="check"><input type="checkbox" id="adm-pa" /> Allow students <b>artworks (upload JPG)</b></label>
+    <label class="check"><input type="checkbox" id="adm-pdel" /> Allow students <b>delete objects</b></label>
+    <h3>Student members (can curate in this gallery)</h3>
+    <div id="adm-members" class="mlist"></div>
+    <div class="card-actions">
+      <button class="btn ghost" id="btn-adm-delete">Delete Gallery</button>
+      <div class="spacer" style="flex:1"></div>
+      <button class="btn" id="btn-adm-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="label-modal" class="modal hidden">
+  <div class="card" style="width:min(460px,90vw)">
+    <button class="close-x" data-close="label-modal">×</button>
+    <h2 id="label-title">Label</h2>
+    <div id="label-body"></div>
+    <div class="row" style="margin-top:12px"><label>Label text</label><textarea id="label-text"></textarea></div>
+    <div class="card-actions" id="label-actions"><button class="btn" id="btn-label-save">Save</button></div>
+  </div>
+</div>
+
+<div id="art-modal" class="modal hidden">
+  <div class="card" style="width:min(580px,92vw)">
+    <button class="close-x" data-close="art-modal">×</button>
+    <h2>Artwork</h2>
+    <div id="art-body"></div>
+    <div id="art-meta"></div>
+    <div id="art-review-show" style="margin-top:10px"></div>
+    <div class="row" style="margin-top:12px"><label>Score (0–100, teacher)</label><input type="number" id="art-score" min="0" max="100" step="1" /></div>
+    <div class="row"><label>Comment (teacher)</label><textarea id="art-comment"></textarea></div>
+    <div class="card-actions"><button class="btn" id="btn-art-review" style="display:none">Submit score</button></div>
+    <h3 style="margin-top:16px">Comments</h3>
+    <div id="art-comments"></div>
+    <div class="row" style="margin-top:8px;display:flex;gap:6px"><input type="text" id="art-comment-add" placeholder="Add a comment…" style="flex:1" /><button class="btn" id="btn-art-comment">Post</button></div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

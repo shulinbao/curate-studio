@@ -1,0 +1,31 @@
+# local secrets — never commit
+.env
+.env.local
+
+# runtime data (contains accounts, password hashes, uploaded images)
+data.json
+data.json.bak
+data.json.tmp
+
+# user uploads (artworks, wall/floor textures)
+uploads/*
+!uploads/.gitkeep
+
+# dependencies / tooling
+node_modules/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# editor / OS noise
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+
+# build artifacts
+*.zip
+*.7z
+*.rar
